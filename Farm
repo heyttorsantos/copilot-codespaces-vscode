@@ -1,0 +1,61 @@
+-- Script de Auto-Farm para Fruit Battlegrounds
+
+-- Função para evitar ser desconectado por inatividade
+local VirtualUser = game:service'VirtualUser'
+game:service'Players'.LocalPlayer.Idled:connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- Função para usar ataques da fruta
+function usarAtaques()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local replicatedStorage = game:GetService("ReplicatedStorage")
+
+    for _, tool in pairs(player.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            humanoidRootPart.CFrame = humanoidRootPart.CFrame * CFrame.new(0, 0, -5) -- Mover um pouco para trás
+            tool.Parent = character
+            wait(0.5)
+            replicatedStorage.Remotes.Attack:FireServer(tool.Name)
+            wait(1)
+            tool.Parent = player.Backpack
+        end
+    end
+end
+
+-- Função para mover o jogador para fora da zona segura
+function sairDaZonaSegura()
+    local safeZone = workspace:FindFirstChild("SafeZone")
+    if safeZone then
+        local player = game.Players.LocalPlayer
+        local humanoidRootPart = player.Character:WaitForChild("HumanoidRootPart")
+        humanoidRootPart.CFrame = CFrame.new(safeZone.Position + Vector3.new(0, 0, 50)) -- Mover para fora da zona segura
+    end
+end
+
+-- Função para ressuscitar automaticamente
+function ressuscitar()
+    local player = game.Players.LocalPlayer
+    player.CharacterAdded:Connect(function(character)
+        character:WaitForChild("Humanoid").Died:Connect(function()
+            wait(5) -- Esperar 5 segundos antes de ressuscitar
+            player:LoadCharacter()
+            sairDaZonaSegura()
+        end)
+    end)
+end
+
+-- Função principal de auto-farm
+function autoFarm()
+    sairDaZonaSegura()
+    ressuscitar()
+    while wait(5) do
+        usarAtaques()
+    end
+end
+
+-- Iniciar o auto-farm
+autoFarm()
